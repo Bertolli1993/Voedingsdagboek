@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Voedingsdagboek</title>
+<meta name="description" content="Persoonlijk dagboek voor voeding, gewicht en stoelgang.">
+<meta name="theme-color" content="#3F5B44">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Voedingsdagboek">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F5F3EC;
+    --paper-shadow: #E8E4D6;
+    --ink: #232019;
+    --ink-soft: #6B6659;
+    --stamp: #B23A2F;
+    --ledger: #3F5B44;
+    --line: #C9C3B4;
+    --highlight: #E8B923;
+    --accent: #2563A8;
+    --accent-dark: #1D4F87;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  #app{
+    font-family:'Libre Franklin', 'Segoe UI', sans-serif;
+    background: var(--paper-shadow);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 32px 16px 60px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  @font-face{}
+  .goal-progress{
+    width:100%;
+    max-width:460px;
+    background: var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:12px 16px;
+    margin-bottom:18px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow: 0 4px 10px rgba(35,32,25,0.12);
+  }
+  .goal-progress-labels{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .goal-progress-labels span:nth-child(2){
+    color:var(--ink);
+    font-weight:600;
+    font-size:12px;
+  }
+  .goal-progress-track{
+    width:100%;
+    height:10px;
+    background: var(--paper-shadow);
+    border-radius:5px;
+    overflow:hidden;
+  }
+  .goal-progress-fill{
+    height:100%;
+    background: var(--accent);
+    border-radius:5px;
+    width:0%;
+    transition: width 0.4s ease;
+  }
+  .goal-progress-note{
+    margin-top:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .brandbar{
+    width:100%;
+    max-width:460px;
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .brandbar h1{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .brandbar p{
+    margin:0;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  .entry-form{
+    width:100%;
+    max-width:460px;
+    background: var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:28px;
+    box-shadow: 0 2px 0 var(--line);
+  }
+  .entry-form .row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .entry-form .row.wrap{ flex-wrap:wrap; }
+  .field{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .field label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    color:var(--ink-soft);
+  }
+  .field input, .field select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    padding:8px 9px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+    width:100%;
+  }
+  .field input[type="text"]{ font-family:'Libre Franklin', sans-serif; }
+  .category-picker{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .cat-btn{
+    flex:1;
+    min-width:75px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:8px 4px;
+    font-family:'Libre Franklin', sans-serif;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .cat-btn:hover{ border-color:var(--accent); }
+  .cat-btn.active{
+    background: var(--accent);
+    border-color: var(--accent);
+    color:#fff;
+  }
+  .item-cat-badge{
+    display:inline-block;
+    font-size:10.5px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink-soft);
+    background:var(--paper-shadow);
+    border-radius:3px;
+    padding:1px 6px;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+  .cat-filter-bar{
+    width:100%;
+    max-width:460px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .cat-filter-btn{
+    flex:1;
+    min-width:60px;
+    background:none;
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:6px 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .cat-filter-btn:hover{ border-color:var(--accent); }
+  .cat-filter-btn.active{
+    background: var(--accent);
+    border-color: var(--accent);
+    color:#fff;
+  }
+  .macro-toggle{
+    background:none;
+    border:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--accent);
+    cursor:pointer;
+    padding:2px 0;
+    text-decoration:underline;
+    letter-spacing:0.3px;
+  }
+  .macro-row{ display:none; gap:10px; margin-bottom:10px; }
+  .macro-row.open{ display:flex; }
+  .add-btn{
+    width:100%;
+    margin-top:4px;
+    background: var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:4px;
+    padding:11px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .add-btn:hover{ opacity:0.92; }
+  .err{
+    color:var(--stamp);
+    font-size:12px;
+    margin-top:4px;
+    min-height:14px;
+  }
+
+  .receipt{
+    width:100%;
+    max-width:420px;
+    background: var(--paper);
+    padding: 40px 22px 16px;
+    margin-bottom: 34px;
+    position:relative;
+    box-shadow: 0 6px 14px rgba(35,32,25,0.10);
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 96%,
+      96% 100%, 92% 96%, 88% 100%, 84% 96%, 80% 100%, 76% 96%, 72% 100%,
+      68% 96%, 64% 100%, 60% 96%, 56% 100%, 52% 96%, 48% 100%, 44% 96%,
+      40% 100%, 36% 96%, 32% 100%, 28% 96%, 24% 100%, 20% 96%, 16% 100%,
+      12% 96%, 8% 100%, 4% 96%, 0% 100%
+    );
+    padding-bottom: 34px;
+  }
+  .receipt-date{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    border-bottom:1px dashed var(--line);
+    padding-bottom:10px;
+    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .receipt-date .rel{ font-size:11px; color:var(--ink-soft); text-transform:none; letter-spacing:0; order:-1; }
+  .item{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    font-size:14px;
+    padding:6px 0;
+    border-bottom:1px dotted var(--line);
+  }
+  .item:last-of-type{ border-bottom:none; }
+  .item .name{ flex:1; }
+  .item .item-time{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .item .kcal{ font-family:'IBM Plex Mono', monospace; white-space:nowrap; }
+  .item .del{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:13px; padding:0 0 0 6px; line-height:1;
+  }
+  .item .del:hover{ color:var(--stamp); }
+  .item .edit{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:12.5px; padding:0 0 0 8px; line-height:1;
+  }
+  .item .edit:hover{ color:var(--accent); }
+  .item .copy{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:13px; padding:0 0 0 8px; line-height:1;
+  }
+  .item .copy:hover{ color:var(--ledger); }
+  .favorites-card{
+    width:100%;
+    max-width:460px;
+    background: var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:16px 18px;
+    margin-bottom:20px;
+  }
+  .favorites-card h2{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin:0 0 12px;
+    color:var(--ink-soft);
+  }
+  .fav-cat-group{ margin-bottom:12px; }
+  .fav-cat-group:last-child{ margin-bottom:0; }
+  .fav-cat-group label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.5px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .favorites-row{
+    display:flex;
+    gap:8px;
+  }
+  .favorites-row select{
+    flex:1;
+    min-width:0;
+    font-family:'Libre Franklin', sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .fav-add-btn{
+    flex:0 0 auto;
+    background: var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:4px;
+    padding:0 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .fav-add-btn:hover{ opacity:0.9; }
+  .fav-del-btn{
+    flex:0 0 auto;
+    background:none;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:4px;
+    width:38px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .fav-del-btn:hover{ color:var(--stamp); border-color:var(--stamp); }
+  .save-fav-btn{
+    width:100%;
+    margin-top:8px;
+    background:none;
+    color: var(--ink-soft);
+    border:1px dashed var(--line);
+    border-radius:4px;
+    padding:9px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+  }
+  .save-fav-btn:hover{ color:var(--accent); border-color:var(--accent); }
+  .cancel-edit-btn{
+    width:100%;
+    margin-top:8px;
+    background:none;
+    color: var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:9px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+    display:none;
+  }
+  .cancel-edit-btn.show{ display:block; }
+  .entry-form.editing{ border-color: var(--stamp); }
+  .editing-label{
+    display:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--stamp);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+  .editing-label.show{ display:block; }
+  .item-macros{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+  }
+
+  .totals{
+    margin-top:14px;
+    padding-top:10px;
+    border-top:2px solid var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .totals .kcal-total{
+    display:flex;
+    justify-content:space-between;
+    font-size:18px;
+    font-weight:600;
+  }
+  .totals .macros{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .stamp{
+    position:absolute;
+    top:14px;
+    right:18px;
+    border:2px solid var(--stamp);
+    color:var(--stamp);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    padding:3px 7px;
+    border-radius:3px;
+    transform:rotate(6deg);
+    opacity:0.85;
+  }
+  .export-btn{
+    margin-top: 6px;
+    background: var(--paper);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .export-btn:hover{ background: var(--accent); color: #fff; }
+  .tabbar{
+    width:100%;
+    max-width:460px;
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .tab-btn{
+    flex:1;
+    background: var(--paper);
+    color: var(--ink-soft);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background: var(--accent);
+    color:#fff;
+    border-color: var(--accent);
+  }
+  .tab-panel{ display:none; width:100%; flex-direction:column; align-items:center; }
+  .tab-panel.active{ display:flex; }
+
+  .weight-list{
+    width:100%;
+    max-width:420px;
+    background: var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .weight-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-bottom:1px dotted var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+  }
+  .weight-row:last-child{ border-bottom:none; }
+  .weight-row .wdate{ color:var(--ink-soft); font-size:12.5px; }
+  .weight-row .wval{ font-weight:600; }
+
+  .wentry{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:10px 16px;
+    border-bottom:1px dotted var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+  }
+  .wentry:last-child{ border-bottom:none; }
+  .wentry .wrow-info{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:4px;
+    color:var(--ink-soft);
+    font-size:12.5px;
+  }
+  .wentry .wrow-data{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .wentry .wval{ font-weight:600; }
+  .wentry .wdiff{ font-size:11.5px; margin-left:8px; }
+  .wdiff.down{ color: var(--stamp); }
+  .wdiff.up{ color: var(--ledger); }
+  .day-block{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:34px;
+  }
+  .day-block .receipt{ margin-bottom:0; }
+
+  .day-food-row{
+    width:100%;
+    max-width:480px;
+    display:flex;
+    align-items:stretch;
+    gap:10px;
+    margin-bottom:34px;
+  }
+  .day-food-row .receipt{
+    margin-bottom:0;
+    flex:1;
+    min-width:0;
+    max-width:none;
+  }
+  .kcal-meter{
+    flex:0 0 42px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .kcal-meter-track{
+    position:relative;
+    width:14px;
+    flex:1;
+    min-height:80px;
+    background: var(--paper-shadow);
+    border:1px solid var(--line);
+    border-radius:7px;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+  }
+  .kcal-meter-fill{
+    width:100%;
+    background: var(--accent);
+    border-radius:0;
+    transition: height 0.3s ease;
+  }
+  .kcal-meter-fill.reached{ background: var(--ledger); }
+  .kcal-meter-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    line-height:1.3;
+    color:var(--ink-soft);
+    margin-top:6px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .daynote{
+    width:92%;
+    background: var(--highlight);
+    border-radius:2px 2px 6px 6px;
+    padding:10px 14px 12px;
+    box-shadow: 0 3px 6px rgba(35,32,25,0.18);
+    transform: rotate(-1.2deg);
+    position:relative;
+    z-index:2;
+    margin-bottom:-10px;
+  }
+  .daynote label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    color:#5c4a12;
+    margin-bottom:4px;
+  }
+  .daynote textarea{
+    width:100%;
+    background:transparent;
+    border:none;
+    outline:none;
+    resize:vertical;
+    min-height:34px;
+    font-family:'Libre Franklin', sans-serif;
+    font-size:13px;
+    color:#3a2f0d;
+    line-height:1.4;
+  }
+  .daynote textarea::placeholder{ color:#8a7228; }
+  .wactions{ display:flex; align-items:center; }
+  .wactions .edit{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:12.5px; padding:0 0 0 14px; line-height:1;
+  }
+  .wactions .edit:hover{ color:var(--accent); }
+  .wactions .del{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:13px; padding:0 0 0 8px; line-height:1;
+  }
+  .wactions .del:hover{ color:var(--stamp); }
+  .chart-card{
+    width:100%;
+    max-width:460px;
+    background: var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:24px;
+  }
+  .chart-card h2{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  .chart-card .chart-wrap{ position:relative; height:220px; display:flex; align-items:center; justify-content:center; }
+  .chart-card .chart-wrap .empty{ margin:0; padding:0 10px; }
+  .empty{
+    color:var(--ink-soft);
+    font-size:13px;
+    text-align:center;
+    max-width:400px;
+    margin-top:10px;
+    line-height:1.6;
+  }
+  .loading{ color:var(--ink-soft); font-size:13px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="goal-progress" id="goalProgress" style="display:none;">
+    <div class="goal-progress-labels">
+      <span id="goalStartLabel"></span>
+      <span id="goalCurrentLabel"></span>
+      <span id="goalTargetLabel">Doel: 80 kg</span>
+    </div>
+    <div class="goal-progress-track">
+      <div class="goal-progress-fill" id="goalProgressFill"></div>
+    </div>
+    <div class="goal-progress-note" id="goalProgressNote"></div>
+  </div>
+
+  <div class="brandbar">
+    <h1>Voedingsdagboek</h1>
+    <p>Elke dag een bonnetje, onderaan de som</p>
+  </div>
+
+  <div class="tabbar">
+    <button type="button" class="tab-btn active" id="tabBtnFood">Voeding</button>
+    <button type="button" class="tab-btn" id="tabBtnWeight">Gewicht</button>
+    <button type="button" class="tab-btn" id="tabBtnStool">Stoelgang</button>
+    <button type="button" class="tab-btn" id="tabBtnManageFav">Standaarditems</button>
+    <button type="button" class="tab-btn" id="tabBtnCharts">Grafieken</button>
+  </div>
+
+  <div class="tab-panel active" id="tabFood">
+
+  <div class="favorites-card" id="favoritesCard" style="display:none;">
+    <h2>Standaard voeding</h2>
+    <div class="fav-cat-group" id="favGroup-ontbijt" style="display:none;">
+      <label>🌅 Ontbijt</label>
+      <div class="favorites-row">
+        <select id="favSelect-ontbijt"></select>
+        <button type="button" class="fav-add-btn" data-cat="ontbijt" title="Toevoegen aan bonnetje">+ Toevoegen</button>
+        <button type="button" class="fav-del-btn" data-cat="ontbijt" title="Standaard verwijderen">✕</button>
+      </div>
+    </div>
+    <div class="fav-cat-group" id="favGroup-lunch" style="display:none;">
+      <label>🥪 Lunch</label>
+      <div class="favorites-row">
+        <select id="favSelect-lunch"></select>
+        <button type="button" class="fav-add-btn" data-cat="lunch" title="Toevoegen aan bonnetje">+ Toevoegen</button>
+        <button type="button" class="fav-del-btn" data-cat="lunch" title="Standaard verwijderen">✕</button>
+      </div>
+    </div>
+    <div class="fav-cat-group" id="favGroup-diner" style="display:none;">
+      <label>🍽️ Diner</label>
+      <div class="favorites-row">
+        <select id="favSelect-diner"></select>
+        <button type="button" class="fav-add-btn" data-cat="diner" title="Toevoegen aan bonnetje">+ Toevoegen</button>
+        <button type="button" class="fav-del-btn" data-cat="diner" title="Standaard verwijderen">✕</button>
+      </div>
+    </div>
+    <div class="fav-cat-group" id="favGroup-snack" style="display:none;">
+      <label>🍪 Snack</label>
+      <div class="favorites-row">
+        <select id="favSelect-snack"></select>
+        <button type="button" class="fav-add-btn" data-cat="snack" title="Toevoegen aan bonnetje">+ Toevoegen</button>
+        <button type="button" class="fav-del-btn" data-cat="snack" title="Standaard verwijderen">✕</button>
+      </div>
+    </div>
+    <div class="fav-cat-group" id="favGroup-overig" style="display:none;">
+      <label>Overig</label>
+      <div class="favorites-row">
+        <select id="favSelect-overig"></select>
+        <button type="button" class="fav-add-btn" data-cat="overig" title="Toevoegen aan bonnetje">+ Toevoegen</button>
+        <button type="button" class="fav-del-btn" data-cat="overig" title="Standaard verwijderen">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-form" id="entryForm">
+    <div class="editing-label" id="editingLabel">✎ Je past een bestaand item aan</div>
+    <div class="row">
+      <div class="field" style="flex:0 0 130px;">
+        <label for="f-date">Datum</label>
+        <input type="date" id="f-date" />
+      </div>
+      <div class="field" style="flex:0 0 100px;">
+        <label for="f-time">Tijd</label>
+        <input type="time" id="f-time" />
+      </div>
+      <div class="field">
+        <label for="f-name">Wat heb je gegeten?</label>
+        <input type="text" id="f-name" placeholder="bv. havermout met banaan" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="f-kcal">Calorieën (kcal)</label>
+        <input type="number" id="f-kcal" min="0" step="1" />
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Moment</label>
+      <div class="category-picker" id="categoryPicker">
+        <button type="button" class="cat-btn" data-cat="ontbijt">🌅 Ontbijt</button>
+        <button type="button" class="cat-btn" data-cat="lunch">🥪 Lunch</button>
+        <button type="button" class="cat-btn" data-cat="diner">🍽️ Diner</button>
+        <button type="button" class="cat-btn" data-cat="snack">🍪 Snack</button>
+      </div>
+    </div>
+    <button type="button" class="macro-toggle" id="macroToggle">+ macro's toevoegen (eiwit / koolh. / vet / vezels)</button>
+    <div class="row macro-row" id="macroRow">
+      <div class="field">
+        <label for="f-protein">Eiwit (g)</label>
+        <input type="number" id="f-protein" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="f-carbs">Koolh. (g)</label>
+        <input type="number" id="f-carbs" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="f-fat">Vet (g)</label>
+        <input type="number" id="f-fat" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="f-fiber">Vezels (g)</label>
+        <input type="number" id="f-fiber" min="0" step="1" />
+      </div>
+    </div>
+    <div class="err" id="formErr"></div>
+    <button type="button" class="add-btn" id="addBtn">Toevoegen aan bonnetje</button>
+    <button type="button" class="save-fav-btn" id="saveFavBtn">☆ Bewaar als standaard</button>
+    <button type="button" class="cancel-edit-btn" id="cancelEditBtn">Bewerken annuleren</button>
+  </div>
+
+  <div class="cat-filter-bar" id="catFilterBar">
+    <button type="button" class="cat-filter-btn active" data-filter="all">Alles</button>
+    <button type="button" class="cat-filter-btn" data-filter="ontbijt">🌅 Ontbijt</button>
+    <button type="button" class="cat-filter-btn" data-filter="lunch">🥪 Lunch</button>
+    <button type="button" class="cat-filter-btn" data-filter="diner">🍽️ Diner</button>
+    <button type="button" class="cat-filter-btn" data-filter="snack">🍪 Snack</button>
+  </div>
+
+  <div id="receipts"><p class="loading">Bonnetjes laden…</p></div>
+
+  <button type="button" class="export-btn" id="exportBtn">⬇ Exporteer naar Excel</button>
+
+
+  </div>
+
+  <div class="tab-panel" id="tabWeight">
+
+  <div class="entry-form" id="weightForm">
+    <div class="editing-label" id="weightEditingLabel">✎ Je past een bestaande meting aan</div>
+    <div class="row">
+      <div class="field" style="flex:0 0 150px;">
+        <label for="w-date">Datum</label>
+        <input type="date" id="w-date" />
+      </div>
+      <div class="field" style="flex:0 0 110px;">
+        <label for="w-time">Tijd (optioneel)</label>
+        <input type="time" id="w-time" />
+      </div>
+      <div class="field">
+        <label for="w-value">Gewicht (kg)</label>
+        <input type="number" id="w-value" min="0" step="0.1" placeholder="bv. 78.4" />
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Moment (optioneel)</label>
+      <div class="category-picker" id="weightPeriodPicker">
+        <button type="button" class="cat-btn" data-period="ochtend">🌅 Ochtend</button>
+        <button type="button" class="cat-btn" data-period="avond">🌙 Avond</button>
+      </div>
+    </div>
+    <div class="err" id="weightErr"></div>
+    <button type="button" class="add-btn" id="weightAddBtn">Gewicht opslaan</button>
+    <button type="button" class="cancel-edit-btn" id="weightCancelEditBtn">Bewerken annuleren</button>
+  </div>
+
+  <div class="weight-list" id="weightList"><p class="loading" style="padding:16px;">Gewicht laden…</p></div>
+
+  <button type="button" class="export-btn" id="weightExportBtn" style="margin-top:20px;">⬇ Exporteer naar Excel</button>
+
+  </div>
+
+  <div class="tab-panel" id="tabStool">
+
+  <div class="entry-form" id="stoolForm">
+    <div class="editing-label" id="stoolEditingLabel">✎ Je past een bestaande invoer aan</div>
+    <div class="row">
+      <div class="field" style="flex:0 0 150px;">
+        <label for="s-date">Datum</label>
+        <input type="date" id="s-date" />
+      </div>
+      <div class="field" style="flex:0 0 110px;">
+        <label for="s-time">Tijd</label>
+        <input type="time" id="s-time" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="s-note">Notitie (hoe zag het eruit?)</label>
+        <input type="text" id="s-note" placeholder="bv. normaal, Bristol type 4" />
+      </div>
+    </div>
+    <div class="err" id="stoolErr"></div>
+    <button type="button" class="add-btn" id="stoolAddBtn">Toevoegen aan bonnetje</button>
+    <button type="button" class="cancel-edit-btn" id="stoolCancelEditBtn">Bewerken annuleren</button>
+  </div>
+
+  <div id="stoolReceipts"><p class="loading">Bonnetjes laden…</p></div>
+
+  <button type="button" class="export-btn" id="stoolExportBtn">⬇ Exporteer naar Excel</button>
+
+  </div>
+
+  <div class="tab-panel" id="tabManageFav">
+
+  <div class="entry-form" id="favManageForm">
+    <div class="editing-label" id="fmEditingLabel">✎ Je past een bestaand standaarditem aan</div>
+    <div class="row">
+      <div class="field">
+        <label for="fm-name">Naam</label>
+        <input type="text" id="fm-name" placeholder="bv. havermout met banaan" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="fm-kcal">Calorieën (kcal)</label>
+        <input type="number" id="fm-kcal" min="0" step="1" />
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Moment</label>
+      <div class="category-picker" id="fmCategoryPicker">
+        <button type="button" class="cat-btn" data-cat="ontbijt">🌅 Ontbijt</button>
+        <button type="button" class="cat-btn" data-cat="lunch">🥪 Lunch</button>
+        <button type="button" class="cat-btn" data-cat="diner">🍽️ Diner</button>
+        <button type="button" class="cat-btn" data-cat="snack">🍪 Snack</button>
+      </div>
+    </div>
+    <button type="button" class="macro-toggle" id="fmMacroToggle">+ macro's toevoegen (eiwit / koolh. / vet / vezels)</button>
+    <div class="row macro-row" id="fmMacroRow">
+      <div class="field">
+        <label for="fm-protein">Eiwit (g)</label>
+        <input type="number" id="fm-protein" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="fm-carbs">Koolh. (g)</label>
+        <input type="number" id="fm-carbs" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="fm-fat">Vet (g)</label>
+        <input type="number" id="fm-fat" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="fm-fiber">Vezels (g)</label>
+        <input type="number" id="fm-fiber" min="0" step="1" />
+      </div>
+    </div>
+    <div class="err" id="fmErr"></div>
+    <button type="button" class="add-btn" id="fmSaveBtn">Standaarditem toevoegen</button>
+    <button type="button" class="cancel-edit-btn" id="fmCancelBtn">Bewerken annuleren</button>
+  </div>
+
+  <div class="weight-list" id="favManageList"><p class="loading" style="padding:16px;">Standaarditems laden…</p></div>
+
+  </div>
+
+  <div class="tab-panel" id="tabCharts">
+
+  <div class="chart-card">
+    <h2>Calorieën per dag</h2>
+    <div class="chart-wrap">
+      <canvas id="kcalChartCanvas"></canvas>
+      <p class="empty" id="kcalChartEmpty" style="display:none;">Nog geen bonnetjes ingevoerd op het tabblad "Voeding". Zodra je iets toevoegt, verschijnt hier de grafiek.</p>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Gewicht per dag</h2>
+    <div class="chart-wrap">
+      <canvas id="weightChartCanvas"></canvas>
+      <p class="empty" id="weightChartEmpty" style="display:none;">Nog geen gewicht ingevoerd op het tabblad "Gewicht". Zodra je een meting toevoegt, verschijnt hier de grafiek.</p>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Stoelgang per dag</h2>
+    <div class="chart-wrap">
+      <canvas id="stoolChartCanvas"></canvas>
+      <p class="empty" id="stoolChartEmpty" style="display:none;">Nog geen stoelgang ingevoerd op het tabblad "Stoelgang". Zodra je iets toevoegt, verschijnt hier de grafiek.</p>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<script src="libs/chart.umd.min.js"></script>
+<script src="libs/xlsx.full.min.js"></script>
+
+<script>
+const STORAGE_KEY = 'food-log-entries';
+const WEIGHT_STORAGE_KEY = 'weight-log-entries';
+const FAVORITES_STORAGE_KEY = 'food-favorites';
+const STOOL_STORAGE_KEY = 'stool-log-entries';
+const DAYNOTES_STORAGE_KEY = 'stool-day-notes';
+let entries = [];
+let editingId = null;
+let selectedCategory = null;
+let activeFilter = 'all';
+let favorites = [];
+let editingFavId = null;
+let selectedFmCategory = null;
+let weightEntries = [];
+let editingWeightId = null;
+let selectedWeightPeriod = null;
+let stoolEntries = [];
+let editingStoolId = null;
+let dayNotes = {};
+
+const $ = (id) => document.getElementById(id);
+
+// Werkt binnen Claude (window.storage) én standalone in elke browser (localStorage fallback)
+const storage = (typeof window.storage !== 'undefined' && window.storage) ? window.storage : {
+  async get(key){
+    const raw = localStorage.getItem(key);
+    if (raw === null) return null;
+    return { key, value: raw };
+  },
+  async set(key, value){
+    localStorage.setItem(key, value);
+    return { key, value };
+  }
+};
+
+function todayStr(){
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,10);
+}
+
+function nowTimeStr(){
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+
+const CATEGORY_META = {
+  ontbijt: { label: 'Ontbijt', emoji: '🌅' },
+  lunch: { label: 'Lunch', emoji: '🥪' },
+  diner: { label: 'Diner', emoji: '🍽️' },
+  snack: { label: 'Snack', emoji: '🍪' },
+};
+
+function suggestCategoryForTime(timeStr){
+  if (!timeStr) return null;
+  const [h, m] = timeStr.split(':').map(Number);
+  const minutes = h * 60 + m;
+  if (minutes >= 5*60 && minutes < 11*60) return 'ontbijt';
+  if (minutes >= 11*60 && minutes < 14*60+30) return 'lunch';
+  if (minutes >= 14*60+30 && minutes < 17*60+30) return 'snack';
+  if (minutes >= 17*60+30 && minutes < 22*60) return 'diner';
+  return 'snack';
+}
+
+function setSelectedCategory(cat){
+  selectedCategory = cat;
+  document.querySelectorAll('#categoryPicker .cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-cat') === cat);
+  });
+}
+
+document.querySelectorAll('#categoryPicker .cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cat = btn.getAttribute('data-cat');
+    setSelectedCategory(selectedCategory === cat ? null : cat);
+  });
+});
+
+document.querySelectorAll('#catFilterBar .cat-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeFilter = btn.getAttribute('data-filter');
+    document.querySelectorAll('#catFilterBar .cat-filter-btn').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    render();
+  });
+});
+
+function setSelectedFmCategory(cat){
+  selectedFmCategory = cat;
+  document.querySelectorAll('#fmCategoryPicker .cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-cat') === cat);
+  });
+}
+
+document.querySelectorAll('#fmCategoryPicker .cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cat = btn.getAttribute('data-cat');
+    setSelectedFmCategory(selectedFmCategory === cat ? null : cat);
+  });
+});
+
+function setSelectedWeightPeriod(period){
+  selectedWeightPeriod = period;
+  document.querySelectorAll('#weightPeriodPicker .cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-period') === period);
+  });
+}
+
+document.querySelectorAll('#weightPeriodPicker .cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const period = btn.getAttribute('data-period');
+    setSelectedWeightPeriod(selectedWeightPeriod === period ? null : period);
+  });
+});
+
+function formatDateLabel(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  const yesterday = new Date(today.getTime() - 86400000);
+  const opts = { day:'numeric', month:'long', year:'numeric' };
+  const label = d.toLocaleDateString('nl-NL', opts);
+  let rel = '';
+  if (d.getTime() === today.getTime()) rel = 'vandaag';
+  else if (d.getTime() === yesterday.getTime()) rel = 'gisteren';
+  return { label, rel };
+}
+
+async function loadEntries(){
+  try{
+    const res = await storage.get(STORAGE_KEY);
+    entries = res ? JSON.parse(res.value) : [];
+  } catch(e){
+    entries = [];
+  }
+  render();
+}
+
+async function saveEntries(){
+  try{
+    await storage.set(STORAGE_KEY, JSON.stringify(entries));
+  } catch(e){
+    console.error('Opslaan mislukt', e);
+  }
+}
+
+async function loadFavorites(){
+  try{
+    const res = await storage.get(FAVORITES_STORAGE_KEY);
+    favorites = res ? JSON.parse(res.value) : [];
+  } catch(e){
+    favorites = [];
+  }
+  renderFavorites();
+}
+
+async function saveFavorites(){
+  try{
+    await storage.set(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+  } catch(e){
+    console.error('Opslaan mislukt', e);
+  }
+}
+
+const FAV_CATEGORY_KEYS = ['ontbijt', 'lunch', 'diner', 'snack', 'overig'];
+
+function renderFavorites(){
+  const card = $('favoritesCard');
+  if (favorites.length === 0){
+    card.style.display = 'none';
+    renderFavManageList();
+    return;
+  }
+  card.style.display = 'block';
+
+  const groups = { ontbijt: [], lunch: [], diner: [], snack: [], overig: [] };
+  favorites.forEach(f => {
+    const key = CATEGORY_META[f.category] ? f.category : 'overig';
+    groups[key].push(f);
+  });
+
+  FAV_CATEGORY_KEYS.forEach(key => {
+    const group = $('favGroup-' + key);
+    const select = $('favSelect-' + key);
+    const items = groups[key];
+    if (items.length === 0){
+      group.style.display = 'none';
+      select.innerHTML = '';
+      return;
+    }
+    group.style.display = 'block';
+    const prevValue = select.value;
+    select.innerHTML = items.map(f =>
+      `<option value="${f.id}">${escapeHtml(f.name)} — ${f.calories} kcal</option>`
+    ).join('');
+    if (items.some(f => f.id === prevValue)) select.value = prevValue;
+  });
+
+  renderFavManageList();
+}
+
+function renderFavManageList(){
+  const list = $('favManageList');
+  if (!list) return;
+  if (favorites.length === 0){
+    list.innerHTML = '<p class="empty" style="padding:16px;">Nog geen standaarditems. Bewaar er een via het tabblad "Voeding" met "☆ Bewaar als standaard", of voeg er hier direct een toe.</p>';
+    return;
+  }
+  list.innerHTML = favorites.map(f => {
+    const cat = CATEGORY_META[f.category];
+    const badge = cat ? `<span class="item-cat-badge">${cat.emoji} ${cat.label}</span>` : '';
+    return `
+      <div class="weight-row">
+        <div>
+          <div class="wdate">${badge}${escapeHtml(f.name)}</div>
+        </div>
+        <div class="wactions">
+          <span class="wval">${f.calories} kcal</span>
+          <button class="edit" title="Bewerken" data-id="${f.id}">✎</button>
+          <button class="del" title="Verwijderen" data-id="${f.id}">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (editingFavId === id) cancelFmEdit();
+      favorites = favorites.filter(f => f.id !== id);
+      renderFavorites();
+      await saveFavorites();
+    });
+  });
+  list.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startFmEdit(btn.getAttribute('data-id'));
+    });
+  });
+}
+
+function startFmEdit(id){
+  const f = favorites.find(fav => fav.id === id);
+  if (!f) return;
+  editingFavId = id;
+  $('fm-name').value = f.name;
+  $('fm-kcal').value = f.calories;
+  $('fm-protein').value = f.protein || '';
+  $('fm-carbs').value = f.carbs || '';
+  $('fm-fat').value = f.fat || '';
+  $('fm-fiber').value = f.fiber || '';
+  setSelectedFmCategory(f.category || null);
+
+  if (f.protein || f.carbs || f.fat || f.fiber){
+    $('fmMacroRow').classList.add('open');
+    $('fmMacroToggle').textContent = '– macro\'s verbergen';
+  }
+
+  $('favManageForm').classList.add('editing');
+  $('fmEditingLabel').classList.add('show');
+  $('fmCancelBtn').classList.add('show');
+  $('fmSaveBtn').textContent = 'Wijziging opslaan';
+  $('favManageForm').scrollIntoView({ behavior:'smooth', block:'start' });
+  $('fm-name').focus();
+}
+
+function cancelFmEdit(){
+  editingFavId = null;
+  $('favManageForm').classList.remove('editing');
+  $('fmEditingLabel').classList.remove('show');
+  $('fmCancelBtn').classList.remove('show');
+  $('fmSaveBtn').textContent = 'Standaarditem toevoegen';
+  $('fm-name').value = '';
+  $('fm-kcal').value = '';
+  $('fm-protein').value = '';
+  $('fm-carbs').value = '';
+  $('fm-fat').value = '';
+  $('fm-fiber').value = '';
+  setSelectedFmCategory(null);
+}
+
+async function handleFmSave(){
+  const name = $('fm-name').value.trim();
+  const kcal = parseFloat($('fm-kcal').value);
+  const errEl = $('fmErr');
+
+  if (!name || isNaN(kcal) || kcal < 0){
+    errEl.textContent = 'Vul een naam en geldig aantal calorieën in.';
+    return;
+  }
+  errEl.textContent = '';
+
+  const values = {
+    name,
+    calories: Math.round(kcal),
+    protein: parseFloat($('fm-protein').value) || 0,
+    carbs: parseFloat($('fm-carbs').value) || 0,
+    fat: parseFloat($('fm-fat').value) || 0,
+    fiber: parseFloat($('fm-fiber').value) || 0,
+    category: selectedFmCategory,
+  };
+
+  if (editingFavId){
+    const idx = favorites.findIndex(f => f.id === editingFavId);
+    if (idx !== -1){
+      favorites[idx] = { ...favorites[idx], ...values };
+    }
+    cancelFmEdit();
+  } else {
+    favorites.push({
+      id: 'fav' + Date.now() + Math.random().toString(36).slice(2,7),
+      ...values,
+    });
+    cancelFmEdit();
+  }
+
+  renderFavorites();
+  await saveFavorites();
+}
+
+$('fmSaveBtn').addEventListener('click', handleFmSave);
+$('fmCancelBtn').addEventListener('click', cancelFmEdit);
+$('fmMacroToggle').addEventListener('click', () => {
+  const row = $('fmMacroRow');
+  const open = row.classList.toggle('open');
+  $('fmMacroToggle').textContent = open ? '– macro\'s verbergen' : '+ macro\'s toevoegen (eiwit / koolh. / vet / vezels)';
+});
+['fm-name','fm-kcal','fm-protein','fm-carbs','fm-fat','fm-fiber'].forEach(id => {
+  $(id).addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter'){ ev.preventDefault(); handleFmSave(); }
+  });
+});
+
+document.querySelectorAll('.fav-add-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cat = btn.getAttribute('data-cat');
+    const id = $('favSelect-' + cat).value;
+    if (id) await addFavoriteAsEntry(id);
+  });
+});
+
+document.querySelectorAll('.fav-del-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cat = btn.getAttribute('data-cat');
+    const id = $('favSelect-' + cat).value;
+    if (!id) return;
+    favorites = favorites.filter(f => f.id !== id);
+    renderFavorites();
+    await saveFavorites();
+  });
+});
+
+async function addFavoriteAsEntry(id){
+  const f = favorites.find(fav => fav.id === id);
+  if (!f) return;
+  const date = $('f-date').value || todayStr();
+  const time = $('f-time').value || nowTimeStr();
+  entries.push({
+    id: 'e' + Date.now() + Math.random().toString(36).slice(2,7),
+    date,
+    time,
+    name: f.name,
+    calories: f.calories,
+    protein: f.protein || 0,
+    carbs: f.carbs || 0,
+    fat: f.fat || 0,
+    fiber: f.fiber || 0,
+    category: f.category || selectedCategory,
+  });
+  render();
+  await saveEntries();
+}
+
+function render(){
+  const container = $('receipts');
+  if (entries.length === 0){
+    container.innerHTML = '<p class="empty">Nog geen bonnetjes. Vul hierboven in wat je vandaag hebt gegeten om te beginnen.</p>';
+    return;
+  }
+
+  const filtered = activeFilter === 'all' ? entries : entries.filter(e => e.category === activeFilter);
+  if (filtered.length === 0){
+    const catLabel = CATEGORY_META[activeFilter] ? CATEGORY_META[activeFilter].label.toLowerCase() : activeFilter;
+    container.innerHTML = `<p class="empty">Nog geen items met label "${catLabel}" gevonden.</p>`;
+    return;
+  }
+
+  const byDate = {};
+  for (const e of filtered){
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  }
+  const dates = Object.keys(byDate).sort((a,b)=> b.localeCompare(a));
+
+  container.innerHTML = dates.map(date => {
+    const items = [...byDate[date]].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+    const totalKcal = items.reduce((s,i)=> s + (i.calories||0), 0);
+    const totalP = items.reduce((s,i)=> s + (i.protein||0), 0);
+    const totalC = items.reduce((s,i)=> s + (i.carbs||0), 0);
+    const totalF = items.reduce((s,i)=> s + (i.fat||0), 0);
+    const totalFib = items.reduce((s,i)=> s + (i.fiber||0), 0);
+    const { label, rel } = formatDateLabel(date);
+    const hasMacros = totalP || totalC || totalF || totalFib;
+
+    const itemsHtml = items.map(i => {
+      const cat = CATEGORY_META[i.category];
+      const badge = cat ? `<span class="item-cat-badge">${cat.emoji} ${cat.label}</span>` : '';
+      return `
+      <div class="item">
+        <div>
+          <div class="name">${badge}${ i.time ? `<span class="item-time">${i.time}</span> ` : '' }${escapeHtml(i.name)}</div>
+          ${ (i.protein||i.carbs||i.fat||i.fiber) ? `<div class="item-macros">E ${i.protein||0}g · K ${i.carbs||0}g · V ${i.fat||0}g · Vez ${i.fiber||0}g</div>` : '' }
+        </div>
+        <div style="display:flex;align-items:center;">
+          <span class="kcal">${i.calories} kcal</span>
+          <button class="copy" title="Kopiëren naar vandaag" data-id="${i.id}">⧉</button>
+          <button class="edit" title="Bewerken" data-id="${i.id}">✎</button>
+          <button class="del" title="Verwijderen" data-id="${i.id}">✕</button>
+        </div>
+      </div>
+    `;
+    }).join('');
+
+    const totalLabel = activeFilter === 'all' ? 'Totaal' : `Totaal (${CATEGORY_META[activeFilter] ? CATEGORY_META[activeFilter].label : activeFilter})`;
+    const kcalPct = Math.max(0, Math.min(100, (totalKcal / KCAL_GOAL) * 100));
+    const kcalReached = totalKcal >= KCAL_GOAL;
+
+    return `
+      <div class="day-food-row">
+        <div class="kcal-meter">
+          <div class="kcal-meter-track">
+            <div class="kcal-meter-fill${kcalReached ? ' reached' : ''}" style="height:${kcalPct}%;"></div>
+          </div>
+          <div class="kcal-meter-label">${totalKcal}<br>/ ${KCAL_GOAL}<br>kcal</div>
+        </div>
+        <div class="receipt">
+          <span class="stamp">totaal</span>
+          <div class="receipt-date"><span>${label}</span>${rel ? `<span class="rel">${rel}</span>` : ''}</div>
+          ${itemsHtml}
+          <div class="totals">
+            <div class="kcal-total"><span>${totalLabel}</span><span>${totalKcal} kcal</span></div>
+            ${ hasMacros ? `<div class="macros"><span>Eiwit ${totalP}g</span><span>Koolh. ${totalC}g</span><span>Vet ${totalF}g</span><span>Vez ${totalFib}g</span></div>` : '' }
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (editingId === id) cancelEdit();
+      entries = entries.filter(e => e.id !== id);
+      render();
+      await saveEntries();
+    });
+  });
+
+  container.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      startEdit(id);
+    });
+  });
+
+  container.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      await copyEntryToToday(id);
+    });
+  });
+}
+
+async function copyEntryToToday(id){
+  const original = entries.find(e => e.id === id);
+  if (!original) return;
+  entries.push({
+    ...original,
+    id: 'e' + Date.now() + Math.random().toString(36).slice(2,7),
+    date: todayStr(),
+    time: nowTimeStr(),
+  });
+  render();
+  await saveEntries();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+$('f-date').value = todayStr();
+$('f-time').value = nowTimeStr();
+setSelectedCategory(suggestCategoryForTime($('f-time').value));
+
+$('macroToggle').addEventListener('click', () => {
+  const row = $('macroRow');
+  const open = row.classList.toggle('open');
+  $('macroToggle').textContent = open ? '– macro\'s verbergen' : '+ macro\'s toevoegen (eiwit / koolh. / vet / vezels)';
+});
+
+function startEdit(id){
+  const entry = entries.find(e => e.id === id);
+  if (!entry) return;
+  editingId = id;
+
+  $('f-date').value = entry.date;
+  $('f-time').value = entry.time || '';
+  $('f-name').value = entry.name;
+  $('f-kcal').value = entry.calories;
+  $('f-protein').value = entry.protein || '';
+  $('f-carbs').value = entry.carbs || '';
+  $('f-fat').value = entry.fat || '';
+  $('f-fiber').value = entry.fiber || '';
+  setSelectedCategory(entry.category || null);
+
+  if (entry.protein || entry.carbs || entry.fat || entry.fiber){
+    $('macroRow').classList.add('open');
+    $('macroToggle').textContent = '– macro\'s verbergen';
+  }
+
+  $('entryForm').classList.add('editing');
+  $('editingLabel').classList.add('show');
+  $('cancelEditBtn').classList.add('show');
+  $('addBtn').textContent = 'Wijzigingen opslaan';
+  $('entryForm').scrollIntoView({ behavior:'smooth', block:'start' });
+  $('f-name').focus();
+}
+
+function cancelEdit(){
+  editingId = null;
+  $('entryForm').classList.remove('editing');
+  $('editingLabel').classList.remove('show');
+  $('cancelEditBtn').classList.remove('show');
+  $('addBtn').textContent = 'Toevoegen aan bonnetje';
+  clearForm();
+}
+
+function clearForm(){
+  $('f-date').value = todayStr();
+  $('f-time').value = nowTimeStr();
+  $('f-name').value = '';
+  $('f-kcal').value = '';
+  $('f-protein').value = '';
+  $('f-carbs').value = '';
+  $('f-fat').value = '';
+  $('f-fiber').value = '';
+  setSelectedCategory(suggestCategoryForTime($('f-time').value));
+}
+
+async function handleAddEntry(){
+  const date = $('f-date').value;
+  const time = $('f-time').value || '';
+  const name = $('f-name').value.trim();
+  const kcal = parseFloat($('f-kcal').value);
+  const errEl = $('formErr');
+
+  if (!date || !name || isNaN(kcal) || kcal < 0){
+    errEl.textContent = 'Vul een datum, omschrijving en geldig aantal calorieën in.';
+    return;
+  }
+  errEl.textContent = '';
+
+  const values = {
+    date,
+    time,
+    name,
+    calories: Math.round(kcal),
+    protein: parseFloat($('f-protein').value) || 0,
+    carbs: parseFloat($('f-carbs').value) || 0,
+    fat: parseFloat($('f-fat').value) || 0,
+    fiber: parseFloat($('f-fiber').value) || 0,
+    category: selectedCategory,
+  };
+
+  if (editingId){
+    const idx = entries.findIndex(e => e.id === editingId);
+    if (idx !== -1){
+      entries[idx] = { ...entries[idx], ...values };
+    }
+    editingId = null;
+    $('entryForm').classList.remove('editing');
+    $('editingLabel').classList.remove('show');
+    $('cancelEditBtn').classList.remove('show');
+    $('addBtn').textContent = 'Toevoegen aan bonnetje';
+  } else {
+    entries.push({
+      id: 'e' + Date.now() + Math.random().toString(36).slice(2,7),
+      ...values,
+    });
+  }
+
+  render();
+  await saveEntries();
+  clearForm();
+  $('f-name').focus();
+}
+
+$('cancelEditBtn').addEventListener('click', cancelEdit);
+$('addBtn').addEventListener('click', handleAddEntry);
+$('saveFavBtn').addEventListener('click', async () => {
+  const name = $('f-name').value.trim();
+  const kcal = parseFloat($('f-kcal').value);
+  const errEl = $('formErr');
+  if (!name || isNaN(kcal) || kcal < 0){
+    errEl.textContent = 'Vul minstens een omschrijving en calorieën in om als standaard te bewaren.';
+    return;
+  }
+  errEl.textContent = '';
+  favorites.push({
+    id: 'fav' + Date.now() + Math.random().toString(36).slice(2,7),
+    name,
+    calories: Math.round(kcal),
+    protein: parseFloat($('f-protein').value) || 0,
+    carbs: parseFloat($('f-carbs').value) || 0,
+    fat: parseFloat($('f-fat').value) || 0,
+    fiber: parseFloat($('f-fiber').value) || 0,
+    category: selectedCategory,
+  });
+  renderFavorites();
+  await saveFavorites();
+});
+['f-name','f-kcal','f-time','f-protein','f-carbs','f-fat','f-fiber'].forEach(id => {
+  $(id).addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter'){
+      ev.preventDefault();
+      handleAddEntry();
+    }
+  });
+});
+
+function exportToExcel(){
+  if (entries.length === 0){
+    alert('Er zijn nog geen bonnetjes om te exporteren.');
+    return;
+  }
+
+  const byDate = {};
+  for (const e of entries){
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  }
+  const dates = Object.keys(byDate).sort((a,b)=> a.localeCompare(b));
+
+  const dailyRows = dates.map(date => {
+    const items = byDate[date];
+    return {
+      'Datum': date,
+      'Aantal items': items.length,
+      'Totaal kcal': items.reduce((s,i)=> s + (i.calories||0), 0),
+      'Totaal eiwit (g)': items.reduce((s,i)=> s + (i.protein||0), 0),
+      'Totaal koolh. (g)': items.reduce((s,i)=> s + (i.carbs||0), 0),
+      'Totaal vet (g)': items.reduce((s,i)=> s + (i.fat||0), 0),
+      'Totaal vezels (g)': items.reduce((s,i)=> s + (i.fiber||0), 0),
+    };
+  });
+
+  const itemRows = dates.flatMap(date =>
+    [...byDate[date]].sort((a,b)=> (a.time||'').localeCompare(b.time||'')).map(i => ({
+      'Datum': date,
+      'Tijd': i.time || '',
+      'Categorie': i.category ? (CATEGORY_META[i.category] ? CATEGORY_META[i.category].label : i.category) : '',
+      'Item': i.name,
+      'Calorieën (kcal)': i.calories,
+      'Eiwit (g)': i.protein || 0,
+      'Koolhydraten (g)': i.carbs || 0,
+      'Vet (g)': i.fat || 0,
+      'Vezels (g)': i.fiber || 0,
+    }))
+  );
+
+  const wb = XLSX.utils.book_new();
+  const wsDaily = XLSX.utils.json_to_sheet(dailyRows);
+  const wsItems = XLSX.utils.json_to_sheet(itemRows);
+  wsDaily['!cols'] = [{wch:12},{wch:12},{wch:12},{wch:16},{wch:16},{wch:14},{wch:14}];
+  wsItems['!cols'] = [{wch:12},{wch:10},{wch:12},{wch:32},{wch:16},{wch:12},{wch:16},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, wsDaily, 'Totalen per dag');
+  XLSX.utils.book_append_sheet(wb, wsItems, 'Alle items');
+
+  const filename = `voedingsdagboek_${todayStr()}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+$('exportBtn').addEventListener('click', exportToExcel);
+
+const tabs = {
+  food: { btn: 'tabBtnFood', panel: 'tabFood' },
+  weight: { btn: 'tabBtnWeight', panel: 'tabWeight' },
+  stool: { btn: 'tabBtnStool', panel: 'tabStool' },
+  manageFav: { btn: 'tabBtnManageFav', panel: 'tabManageFav' },
+  charts: { btn: 'tabBtnCharts', panel: 'tabCharts' },
+};
+function switchTab(active){
+  Object.entries(tabs).forEach(([key, t]) => {
+    const isActive = key === active;
+    $(t.btn).classList.toggle('active', isActive);
+    $(t.panel).classList.toggle('active', isActive);
+  });
+  if (active === 'charts') renderCharts();
+}
+$('tabBtnFood').addEventListener('click', () => switchTab('food'));
+$('tabBtnWeight').addEventListener('click', () => switchTab('weight'));
+$('tabBtnStool').addEventListener('click', () => switchTab('stool'));
+$('tabBtnManageFav').addEventListener('click', () => switchTab('manageFav'));
+$('tabBtnCharts').addEventListener('click', () => switchTab('charts'));
+
+$('w-date').value = todayStr();
+
+async function loadWeightEntries(){
+  try{
+    const res = await storage.get(WEIGHT_STORAGE_KEY);
+    weightEntries = res ? JSON.parse(res.value) : [];
+  } catch(e){
+    weightEntries = [];
+  }
+  const changed = backfillWeightPeriods();
+  renderWeight();
+  if (changed) await saveWeightEntries();
+}
+
+function backfillWeightPeriods(){
+  let changed = false;
+  weightEntries.forEach(w => {
+    if (!w.period && w.time){
+      const hour = parseInt(w.time.split(':')[0], 10);
+      w.period = hour < 12 ? 'ochtend' : 'avond';
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+async function saveWeightEntries(){
+  try{
+    await storage.set(WEIGHT_STORAGE_KEY, JSON.stringify(weightEntries));
+  } catch(e){
+    console.error('Opslaan mislukt', e);
+  }
+}
+
+const WEIGHT_GOAL = 80;
+const KCAL_GOAL = 3000;
+
+function renderGoalProgress(){
+  const box = $('goalProgress');
+  if (weightEntries.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+
+  const sorted = [...weightEntries].sort((a,b)=> {
+    const cmp = a.date.localeCompare(b.date);
+    if (cmp !== 0) return cmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+  const startWeight = sorted[0].weight;
+  const currentWeight = sorted[sorted.length - 1].weight;
+
+  $('goalStartLabel').textContent = `Start: ${startWeight} kg`;
+  $('goalCurrentLabel').textContent = `Nu: ${currentWeight} kg`;
+  $('goalTargetLabel').textContent = `Doel: ${WEIGHT_GOAL} kg`;
+
+  let percent;
+  if (WEIGHT_GOAL === startWeight){
+    percent = currentWeight >= WEIGHT_GOAL ? 100 : 0;
+  } else {
+    percent = ((currentWeight - startWeight) / (WEIGHT_GOAL - startWeight)) * 100;
+  }
+  percent = Math.max(0, Math.min(100, percent));
+  $('goalProgressFill').style.width = percent + '%';
+
+  const remaining = Math.round((WEIGHT_GOAL - currentWeight) * 10) / 10;
+  const noteEl = $('goalProgressNote');
+  if (remaining <= 0){
+    noteEl.textContent = `🎉 Doel bereikt! (${Math.abs(remaining)} kg erover)`;
+  } else {
+    noteEl.textContent = `Nog ${remaining} kg te gaan (${Math.round(percent)}% van je traject)`;
+  }
+}
+
+function renderWeight(){
+  renderGoalProgress();
+  const container = $('weightList');
+  if (weightEntries.length === 0){
+    container.innerHTML = '<p class="empty" style="padding:16px;">Nog geen gewicht ingevoerd. Vul hierboven een datum en gewicht in.</p>';
+    return;
+  }
+  const sorted = [...weightEntries].sort((a,b)=> {
+    const cmp = b.date.localeCompare(a.date);
+    if (cmp !== 0) return cmp;
+    return (b.time || '').localeCompare(a.time || '');
+  });
+
+  container.innerHTML = sorted.map((w, idx) => {
+    const older = sorted[idx + 1];
+    let diffHtml = '';
+    if (older){
+      const diff = Math.round((w.weight - older.weight) * 10) / 10;
+      if (diff !== 0){
+        const cls = diff < 0 ? 'down' : 'up';
+        const sign = diff > 0 ? '+' : '';
+        diffHtml = `<span class="wdiff ${cls}">${sign}${diff} kg</span>`;
+      }
+    }
+    const { label, rel } = formatDateLabel(w.date);
+    const dateLabel = rel ? rel : label;
+    const timeLabel = w.time ? ` · ${w.time}` : '';
+    const periodBadge = w.period === 'ochtend' ? '<span class="item-cat-badge">🌅 Ochtend</span> '
+      : w.period === 'avond' ? '<span class="item-cat-badge">🌙 Avond</span> ' : '';
+    return `
+      <div class="wentry">
+        <div class="wrow-info">${periodBadge}<span>${dateLabel}${timeLabel}</span></div>
+        <div class="wrow-data">
+          <span><span class="wval">${w.weight} kg</span>${diffHtml}</span>
+          <span class="wactions">
+            <button class="edit" title="Bewerken" data-id="${w.id}">✎</button>
+            <button class="del" title="Verwijderen" data-id="${w.id}">✕</button>
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (editingWeightId === id) cancelWeightEdit();
+      weightEntries = weightEntries.filter(w => w.id !== id);
+      renderWeight();
+      await saveWeightEntries();
+    });
+  });
+  container.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startWeightEdit(btn.getAttribute('data-id'));
+    });
+  });
+}
+
+function startWeightEdit(id){
+  const w = weightEntries.find(e => e.id === id);
+  if (!w) return;
+  editingWeightId = id;
+  $('w-date').value = w.date;
+  $('w-time').value = w.time || '';
+  $('w-value').value = w.weight;
+  setSelectedWeightPeriod(w.period || null);
+  $('weightForm').classList.add('editing');
+  $('weightEditingLabel').classList.add('show');
+  $('weightCancelEditBtn').classList.add('show');
+  $('weightAddBtn').textContent = 'Wijziging opslaan';
+  $('weightForm').scrollIntoView({ behavior:'smooth', block:'start' });
+  $('w-value').focus();
+}
+
+function cancelWeightEdit(){
+  editingWeightId = null;
+  $('weightForm').classList.remove('editing');
+  $('weightEditingLabel').classList.remove('show');
+  $('weightCancelEditBtn').classList.remove('show');
+  $('weightAddBtn').textContent = 'Gewicht opslaan';
+  $('w-date').value = todayStr();
+  $('w-time').value = '';
+  $('w-value').value = '';
+  setSelectedWeightPeriod(null);
+}
+
+async function handleAddWeight(){
+  const date = $('w-date').value;
+  const time = $('w-time').value || '';
+  const val = parseFloat($('w-value').value);
+  const period = selectedWeightPeriod;
+  const errEl = $('weightErr');
+
+  if (!date || isNaN(val) || val <= 0){
+    errEl.textContent = 'Vul een datum en geldig gewicht in.';
+    return;
+  }
+  errEl.textContent = '';
+
+  if (editingWeightId){
+    const idx = weightEntries.findIndex(w => w.id === editingWeightId);
+    if (idx !== -1){
+      weightEntries[idx] = { ...weightEntries[idx], date, time, weight: val, period };
+    }
+    cancelWeightEdit();
+  } else {
+    const existingIdx = weightEntries.findIndex(w => w.date === date && (w.time || '') === time);
+    if (existingIdx !== -1){
+      weightEntries[existingIdx].weight = val;
+      weightEntries[existingIdx].period = period;
+    } else {
+      weightEntries.push({ id: 'w' + Date.now() + Math.random().toString(36).slice(2,7), date, time, weight: val, period });
+    }
+    $('w-date').value = todayStr();
+    $('w-time').value = '';
+    $('w-value').value = '';
+    setSelectedWeightPeriod(null);
+  }
+
+  renderWeight();
+  await saveWeightEntries();
+}
+
+$('weightAddBtn').addEventListener('click', handleAddWeight);
+$('weightCancelEditBtn').addEventListener('click', cancelWeightEdit);
+$('w-value').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter'){ ev.preventDefault(); handleAddWeight(); }
+});
+$('w-time').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter'){ ev.preventDefault(); handleAddWeight(); }
+});
+
+function exportWeightToExcel(){
+  if (weightEntries.length === 0){
+    alert('Er is nog geen gewicht om te exporteren.');
+    return;
+  }
+  const sorted = [...weightEntries].sort((a,b)=> {
+    const cmp = a.date.localeCompare(b.date);
+    if (cmp !== 0) return cmp;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+  const rows = sorted.map(w => ({
+    'Datum': w.date,
+    'Tijd': w.time || '',
+    'Moment': w.period === 'ochtend' ? 'Ochtend' : w.period === 'avond' ? 'Avond' : '',
+    'Gewicht (kg)': w.weight,
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:14},{wch:10},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Gewicht');
+  XLSX.writeFile(wb, `gewicht_${todayStr()}.xlsx`);
+}
+$('weightExportBtn').addEventListener('click', exportWeightToExcel);
+
+/* ---------- Stoelgang ---------- */
+
+$('s-date').value = todayStr();
+$('s-time').value = nowTimeStr();
+
+async function loadStoolEntries(){
+  try{
+    const res = await storage.get(STOOL_STORAGE_KEY);
+    stoolEntries = res ? JSON.parse(res.value) : [];
+  } catch(e){
+    stoolEntries = [];
+  }
+  renderStool();
+}
+
+async function saveStoolEntries(){
+  try{
+    await storage.set(STOOL_STORAGE_KEY, JSON.stringify(stoolEntries));
+  } catch(e){
+    console.error('Opslaan mislukt', e);
+  }
+}
+
+async function loadDayNotes(){
+  try{
+    const res = await storage.get(DAYNOTES_STORAGE_KEY);
+    dayNotes = res ? JSON.parse(res.value) : {};
+  } catch(e){
+    dayNotes = {};
+  }
+}
+
+async function saveDayNotes(){
+  try{
+    await storage.set(DAYNOTES_STORAGE_KEY, JSON.stringify(dayNotes));
+  } catch(e){
+    console.error('Opslaan mislukt', e);
+  }
+}
+
+function renderStool(){
+  const container = $('stoolReceipts');
+  if (stoolEntries.length === 0){
+    container.innerHTML = '<p class="empty">Nog geen invoer. Vul hierboven een tijdstip en notitie in.</p>';
+    return;
+  }
+  const byDate = {};
+  for (const e of stoolEntries){
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  }
+  const dates = Object.keys(byDate).sort((a,b)=> b.localeCompare(a));
+
+  container.innerHTML = dates.map(date => {
+    const items = [...byDate[date]].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+    const { label, rel } = formatDateLabel(date);
+    const noteVal = dayNotes[date] || '';
+
+    const itemsHtml = items.map(i => `
+      <div class="item">
+        <div>
+          <div class="name">${ i.time ? `<span class="item-time">${i.time}</span> ` : '' }${escapeHtml(i.note || '(geen notitie)')}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <button class="edit" title="Bewerken" data-id="${i.id}">✎</button>
+          <button class="del" title="Verwijderen" data-id="${i.id}">✕</button>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="day-block">
+        <div class="daynote">
+          <label>Bijzonderheden — ${rel ? rel : label}</label>
+          <textarea data-date="${date}" placeholder="bv. buikpijn, nieuw voedingsmiddel geprobeerd...">${escapeHtml(noteVal)}</textarea>
+        </div>
+        <div class="receipt">
+          <span class="stamp">${items.length}×</span>
+          <div class="receipt-date">${rel ? `<span class="rel">${rel}</span>` : ''}<span>${label}</span></div>
+          ${itemsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (editingStoolId === id) cancelStoolEdit();
+      stoolEntries = stoolEntries.filter(e => e.id !== id);
+      renderStool();
+      await saveStoolEntries();
+    });
+  });
+  container.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startStoolEdit(btn.getAttribute('data-id'));
+    });
+  });
+  container.querySelectorAll('.daynote textarea').forEach(ta => {
+    ta.addEventListener('blur', async () => {
+      const date = ta.getAttribute('data-date');
+      const val = ta.value.trim();
+      if (val){
+        dayNotes[date] = val;
+      } else {
+        delete dayNotes[date];
+      }
+      await saveDayNotes();
+    });
+  });
+}
+
+function startStoolEdit(id){
+  const entry = stoolEntries.find(e => e.id === id);
+  if (!entry) return;
+  editingStoolId = id;
+  $('s-date').value = entry.date;
+  $('s-time').value = entry.time || '';
+  $('s-note').value = entry.note || '';
+  $('stoolForm').classList.add('editing');
+  $('stoolEditingLabel').classList.add('show');
+  $('stoolCancelEditBtn').classList.add('show');
+  $('stoolAddBtn').textContent = 'Wijziging opslaan';
+  $('stoolForm').scrollIntoView({ behavior:'smooth', block:'start' });
+  $('s-note').focus();
+}
+
+function cancelStoolEdit(){
+  editingStoolId = null;
+  $('stoolForm').classList.remove('editing');
+  $('stoolEditingLabel').classList.remove('show');
+  $('stoolCancelEditBtn').classList.remove('show');
+  $('stoolAddBtn').textContent = 'Toevoegen aan bonnetje';
+  $('s-date').value = todayStr();
+  $('s-time').value = nowTimeStr();
+  $('s-note').value = '';
+}
+
+async function handleAddStool(){
+  const date = $('s-date').value;
+  const time = $('s-time').value || '';
+  const note = $('s-note').value.trim();
+  const errEl = $('stoolErr');
+
+  if (!date){
+    errEl.textContent = 'Vul een datum in.';
+    return;
+  }
+  errEl.textContent = '';
+
+  if (editingStoolId){
+    const idx = stoolEntries.findIndex(e => e.id === editingStoolId);
+    if (idx !== -1){
+      stoolEntries[idx] = { ...stoolEntries[idx], date, time, note };
+    }
+    cancelStoolEdit();
+  } else {
+    stoolEntries.push({
+      id: 's' + Date.now() + Math.random().toString(36).slice(2,7),
+      date, time, note,
+    });
+    $('s-date').value = todayStr();
+    $('s-time').value = nowTimeStr();
+    $('s-note').value = '';
+  }
+
+  renderStool();
+  await saveStoolEntries();
+}
+
+$('stoolAddBtn').addEventListener('click', handleAddStool);
+$('stoolCancelEditBtn').addEventListener('click', cancelStoolEdit);
+['s-date','s-time','s-note'].forEach(id => {
+  $(id).addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter'){ ev.preventDefault(); handleAddStool(); }
+  });
+});
+
+function exportStoolToExcel(){
+  if (stoolEntries.length === 0){
+    alert('Er is nog geen stoelgang om te exporteren.');
+    return;
+  }
+  const byDate = {};
+  for (const e of stoolEntries){
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  }
+  const dates = Object.keys(byDate).sort((a,b)=> a.localeCompare(b));
+
+  const itemRows = dates.flatMap(date =>
+    [...byDate[date]].sort((a,b)=> (a.time||'').localeCompare(b.time||'')).map(i => ({
+      'Datum': date,
+      'Tijd': i.time || '',
+      'Notitie': i.note || '',
+    }))
+  );
+  const dayRows = dates.map(date => ({
+    'Datum': date,
+    'Aantal keer': byDate[date].length,
+    'Bijzonderheden': dayNotes[date] || '',
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const wsItems = XLSX.utils.json_to_sheet(itemRows);
+  const wsDays = XLSX.utils.json_to_sheet(dayRows);
+  wsItems['!cols'] = [{wch:14},{wch:10},{wch:40}];
+  wsDays['!cols'] = [{wch:14},{wch:14},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, wsItems, 'Alle items');
+  XLSX.utils.book_append_sheet(wb, wsDays, 'Per dag');
+  XLSX.writeFile(wb, `stoelgang_${todayStr()}.xlsx`);
+}
+$('stoolExportBtn').addEventListener('click', exportStoolToExcel);
+
+let kcalChartInstance = null;
+let weightChartInstance = null;
+let stoolChartInstance = null;
+
+const barValueLabelsPlugin = {
+  id: 'barValueLabels',
+  afterDatasetsDraw(chart){
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = "11px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = '#6B6659';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, idx) => {
+      const value = chart.data.datasets[0].data[idx];
+      if (value === null || value === undefined) return;
+      ctx.fillText(String(value), bar.x, bar.y - 6);
+    });
+    ctx.restore();
+  }
+};
+
+function renderCharts(){
+  const kcalCanvas = $('kcalChartCanvas');
+  const weightCanvas = $('weightChartCanvas');
+  const stoolCanvas = $('stoolChartCanvas');
+  if (!kcalCanvas || !weightCanvas || !stoolCanvas) return;
+
+  if (typeof Chart === 'undefined'){
+    $('kcalChartEmpty').textContent = 'De grafiek-bibliotheek kon niet geladen worden. Controleer je internetverbinding en herlaad.';
+    $('kcalChartEmpty').style.display = 'block';
+    $('weightChartEmpty').textContent = 'De grafiek-bibliotheek kon niet geladen worden. Controleer je internetverbinding en herlaad.';
+    $('weightChartEmpty').style.display = 'block';
+    $('stoolChartEmpty').textContent = 'De grafiek-bibliotheek kon niet geladen worden. Controleer je internetverbinding en herlaad.';
+    $('stoolChartEmpty').style.display = 'block';
+    kcalCanvas.style.display = 'none';
+    weightCanvas.style.display = 'none';
+    stoolCanvas.style.display = 'none';
+    return;
+  }
+
+  const byDate = {};
+  for (const e of entries){
+    byDate[e.date] = (byDate[e.date] || 0) + (e.calories || 0);
+  }
+  const kcalDates = Object.keys(byDate).sort((a,b)=> a.localeCompare(b));
+
+  if (kcalDates.length === 0){
+    $('kcalChartEmpty').style.display = 'block';
+    kcalCanvas.style.display = 'none';
+    if (kcalChartInstance){ kcalChartInstance.destroy(); kcalChartInstance = null; }
+  } else {
+    $('kcalChartEmpty').style.display = 'none';
+    kcalCanvas.style.display = 'block';
+    const kcalLabels = kcalDates.map(d => formatDateLabel(d).label.replace(/ \d{4}$/, ''));
+    const kcalValues = kcalDates.map(d => byDate[d]);
+
+    if (kcalChartInstance) kcalChartInstance.destroy();
+    kcalChartInstance = new Chart(kcalCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: kcalLabels,
+        datasets: [{
+          label: 'kcal per dag',
+          data: kcalValues,
+          borderColor: '#3F5B44',
+          backgroundColor: '#3F5B44',
+          pointRadius: 3,
+          pointBackgroundColor: '#3F5B44',
+          tension: 0.25,
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#E8E4D6' }, ticks: { color: '#6B6659', font: { family: 'IBM Plex Mono' } } },
+          x: { grid: { display: false }, ticks: { color: '#6B6659', font: { family: 'IBM Plex Mono', size: 10 } } }
+        }
+      }
+    });
+  }
+
+  const sortedWeights = [...weightEntries].sort((a,b)=> a.date.localeCompare(b.date));
+
+  if (sortedWeights.length === 0){
+    $('weightChartEmpty').style.display = 'block';
+    weightCanvas.style.display = 'none';
+    if (weightChartInstance){ weightChartInstance.destroy(); weightChartInstance = null; }
+  } else {
+    $('weightChartEmpty').style.display = 'none';
+    weightCanvas.style.display = 'block';
+    const weightLabels = sortedWeights.map(w => formatDateLabel(w.date).label.replace(/ \d{4}$/, ''));
+    const weightValues = sortedWeights.map(w => w.weight);
+
+    if (weightChartInstance) weightChartInstance.destroy();
+    weightChartInstance = new Chart(weightCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: weightLabels,
+        datasets: [{
+          label: 'Gewicht (kg)',
+          data: weightValues,
+          borderColor: '#B23A2F',
+          backgroundColor: '#B23A2F',
+          pointRadius: 3,
+          pointBackgroundColor: '#B23A2F',
+          tension: 0.25,
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: '#E8E4D6' }, ticks: { color: '#6B6659', font: { family: 'IBM Plex Mono' } } },
+          x: { grid: { display: false }, ticks: { color: '#6B6659', font: { family: 'IBM Plex Mono', size: 10 } } }
+        }
+      }
+    });
+  }
+
+  const stoolByDate = {};
+  for (const e of stoolEntries){
+    stoolByDate[e.date] = (stoolByDate[e.date] || 0) + 1;
+  }
+  const stoolDates = Object.keys(stoolByDate).sort((a,b)=> a.localeCompare(b));
+
+  if (stoolDates.length === 0){
+    $('stoolChartEmpty').style.display = 'block';
+    stoolCanvas.style.display = 'none';
+    if (stoolChartInstance){ stoolChartInstance.destroy(); stoolChartInstance = null; }
+  } else {
+    $('stoolChartEmpty').style.display = 'none';
+    stoolCanvas.style.display = 'block';
+    const stoolLabels = stoolDates.map(d => formatDateLabel(d).label.replace(/ \d{4}$/, ''));
+    const stoolValues = stoolDates.map(d => stoolByDate[d]);
+    const stoolMax = Math.max(...stoolValues);
+
+    if (stoolChartInstance) stoolChartInstance.destroy();
+    stoolChartInstance = new Chart(stoolCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: stoolLabels,
+        datasets: [{
+          label: 'Keer per dag',
+          data: stoolValues,
+          backgroundColor: '#E8B923',
+          borderRadius: 3,
+          maxBarThickness: 28,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 20 } },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: stoolMax + 1,
+            ticks: { stepSize: 1, color: '#6B6659', font: { family: 'IBM Plex Mono' } },
+            grid: { color: '#E8E4D6' }
+          },
+          x: { grid: { display: false }, ticks: { color: '#6B6659', font: { family: 'IBM Plex Mono', size: 10 } } }
+        }
+      },
+      plugins: [barValueLabelsPlugin]
+    });
+  }
+}
+
+loadEntries();
+loadWeightEntries();
+loadFavorites();
+loadDayNotes().then(loadStoolEntries);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
